@@ -4,171 +4,209 @@
 #include "LargeInt.h"
 
 
-LargeInt::LargeInt()
+uintLarge_t::uintLarge_t()
   : value{}
 {
 }
 
-LargeInt::LargeInt(const std::string& value)
+uintLarge_t::uintLarge_t(const std::string& value)
   : value{ value }
 {
 }
 
-void LargeInt::add(const LargeInt& rhs)
+uintLarge_t uintLarge_t::add(const uintLarge_t& lhs, const uintLarge_t& rhs)
 {
-  size_t length = (this->value.length() >= rhs.value.length()) ? this->value.length() : rhs.value.length();
+  uintLarge_t output{};
+  uintLarge_t temp_lhs{ lhs };
+  uintLarge_t temp_rhs{ rhs };
+  match_size(temp_lhs, temp_rhs);
+  match_size(output, temp_rhs);
+
   int carry{ 0 };
-
-  auto left_iter = this->value.crbegin();
-  auto right_iter = rhs.value.crbegin();
-
-  LargeInt output{};
-
-  for (size_t i{ 0 }; i < length; ++i)
+  for (size_t j{ 0 }; j < temp_lhs.value.size(); ++j)
   {
-    int left_val{ 0 };
-    int right_val{ 0 };
-    if (left_iter != this->value.crend())
-    {
-      left_val = std::stoi(std::string{ *left_iter });
-      left_iter++;
-    }
-    if (right_iter != rhs.value.crend())
-    {
-      right_val = std::stoi(std::string{ *right_iter });
-      right_iter++;
-    }
+    size_t i{ (temp_lhs.value.size() - 1) - j };
+    int left_val{ temp_lhs.get_digit_value(i) };
+    int right_val{ temp_rhs.get_digit_value(i) };
 
     left_val += carry + right_val;
+    carry = 0;
 
     if (left_val > 9)
     {
       carry = 1;
-      output.value += std::to_string(left_val)[1];
+      left_val -= 10;
     }
-    else
-    {
-      carry = 0;
-      output.value += std::to_string(left_val);
-    }
+    output.set_digit_value(left_val, i);
   }
-
-  // final carry
+  // final carry bit
   if (carry != 0)
   {
-    output.value += "1";
+    output.value.insert(0, 1, '1');
   }
-
-  std::reverse(output.value.begin(), output.value.end());
-  this->value = output.value;
+  return output;
 }
 
-void LargeInt::subtract(const LargeInt& rhs)
+uintLarge_t uintLarge_t::subtract(const uintLarge_t& lhs, const uintLarge_t& rhs)
 {
-  // TODO: Complete Definition
-}
-
-void LargeInt::multiply(const LargeInt& rhs)
-{
-  karatasuba_multiply(rhs);
-}
-
-void LargeInt::divide(const LargeInt& denominator)
-{
-  // TODO: Complete Definition
-}
-
-void LargeInt::sqrt()
-{
-  // TODO: Complete Definition
-}
-
-std::string LargeInt::get_value() const
-{
-  return value;
-}
-
-void LargeInt::karatasuba_multiply(const LargeInt& rhs, const size_t chunk_size)
-{
-  std::vector<IntType> lhs_chunks{ this->extract_chunks(chunk_size) };
-  std::vector<IntType> rhs_chunks{ rhs.extract_chunks(chunk_size) };
-  std::vector<IntType> calculation{};
-
-  size_t length = (lhs_chunks.size() >= rhs_chunks.size()) ? lhs_chunks.size() : rhs_chunks.size();
-
-  auto left_iter = lhs_chunks.begin();
-  auto right_iter = rhs_chunks.begin();
-
-  for (size_t i{ 0 }; i < length - 1; i += 2)
+  uintLarge_t output{};
+  uintLarge_t temp_lhs{ lhs };
+  uintLarge_t temp_rhs{ rhs };
+  match_size(temp_lhs, temp_rhs);
+  match_size(output, temp_rhs);
+  for (size_t j{ 0 }; j < temp_lhs.value.size(); ++j)
   {
-    IntType left_lower{ 0 };
-    IntType left_upper{ 0 };
-    if (left_iter != lhs_chunks.end())
+    size_t i{ (temp_lhs.value.size() - 1) - j };
+    int left_value{ temp_lhs.get_digit_value(i) };
+    int right_value{ temp_rhs.get_digit_value(i) };
+    int result = left_value - right_value;
+    if (result < 0)
     {
-      left_lower = *left_iter;
+      size_t k = 1;
+      while (temp_lhs.get_digit_value(i - k) == 0)
+      {
+        temp_lhs.set_digit_value(9, i - k);
+        ++k;
+      }
+      temp_lhs.set_digit_value(temp_lhs.get_digit_value(i - k) - 1, i - k);
+      result = result + 10;
     }
-    if ((left_iter + 1) != lhs_chunks.end())
-    {
-      left_upper = *(left_iter + 1);
-      left_iter += 2;
-    }
-
-    IntType right_lower{ 0 };
-    IntType right_upper{ 0 };
-    if (right_iter != rhs_chunks.end())
-    {
-      right_lower = *right_iter;
-    } 
-    if ((right_iter + 1) != rhs_chunks.end())
-    {
-      right_upper = *(right_iter + 1);
-      right_iter += 2;
-    }
-
-    IntType z2{ left_upper * right_upper };
-    IntType z0{ left_lower * right_lower };
-    IntType z1 = (left_upper + left_lower) * (right_upper + right_lower) - z2 - z0;
-    calculation.push_back(z2 * std::pow(std::pow(base, chunk_size), 2) + z1 * std::pow(base, chunk_size) + z0);
+    output.set_digit_value(result, i);
   }
-  LargeInt output{ "0" };
-  size_t counter{ 0 };
-  for (auto number : calculation)
-  {
-    LargeInt largeNum{ std::to_string(number) };
-    largeNum.multiply_by_10(counter*counter);
-    output.add(largeNum);
-    counter += 2;
-  }
-  this->value = output.value;
+  return output;
 }
 
-std::vector<LargeInt::IntType> LargeInt::extract_chunks(size_t chunk_size) const
+uintLarge_t uintLarge_t::multiply(const uintLarge_t& lhs, const uintLarge_t& rhs)
 {
-  std::vector<IntType> chunk_vector;
-  size_t index{ 0 };
-  size_t remainder = value.length() % chunk_size;
-  if (remainder != 0)
-  {
-    chunk_vector.push_back(std::stoll(value.substr(index, remainder)));
-    index += remainder;
-  }
-  while (index < value.length())
-  {
-    chunk_vector.push_back(std::stoll(value.substr(index, chunk_size)));
-    index += chunk_size;
-  }
-  std::reverse(chunk_vector.begin(), chunk_vector.end());
-  return chunk_vector;
+  return karatasuba_multiply(lhs, rhs);
 }
 
-void LargeInt::multiply_by_10(const size_t num_times)
+uintLarge_t uintLarge_t::divide(const uintLarge_t& numerator, const uintLarge_t& denominator, size_t digits_of_precision)
 {
-  LargeInt output{};
-  output.value = this->value;
+  // TODO: Complete
+  return uintLarge_t();
+}
 
+uintLarge_t uintLarge_t::sqrt(const uintLarge_t& input, size_t digits_of_precision)
+{
+  // TODO: Complete
+  return uintLarge_t();
+}
+
+std::string uintLarge_t::get_string_value() const
+{
+  std::string output_value = this->value;
+  if (output_value.empty())
+  {
+    output_value = std::string{ "0" };
+  }
+  else
+  {
+    output_value.erase(0, std::min(output_value.find_first_not_of('0'), output_value.size() - 1));
+  }
+  return output_value;
+}
+
+uintLarge_t uintLarge_t::operator+(const uintLarge_t& other)
+{
+  return add(*this, other);
+}
+
+uintLarge_t uintLarge_t::operator-(const uintLarge_t& other)
+{
+  return subtract(*this, other);
+}
+
+uintLarge_t uintLarge_t::operator*(const uintLarge_t& other)
+{
+  return multiply(*this, other);
+}
+
+uintLarge_t uintLarge_t::karatasuba_multiply(const uintLarge_t& lhs, const uintLarge_t& rhs, const size_t chunk_size)
+{
+  uintLarge_t ret_value{};
+  uintLarge_t temp_lhs{ lhs };
+  uintLarge_t temp_rhs{ rhs };
+  match_size(temp_lhs, temp_rhs);
+
+  if (temp_lhs.value.size() > chunk_size)
+  {
+    // cut each input number into two halfs
+    auto [left_upper, left_lower] = temp_lhs.cut_in_half();
+    auto [right_upper, right_lower] = temp_rhs.cut_in_half();
+
+    // perform karatasuba multiplication recurively
+    uintLarge_t z2{ left_upper * right_upper };
+    uintLarge_t z0{ left_lower * right_lower };
+    uintLarge_t z1{ (left_lower + left_upper) * (right_lower + right_upper) - z2 - z0 };
+
+    size_t shift_size = left_lower.value.size();
+    ret_value = add(add(multiply_by_10(multiply_by_10(z2, shift_size), shift_size), multiply_by_10(z1, shift_size)), z0);
+  }
+  else
+  {
+    // Perform normal multiplation (less than default_chunk_size)
+    IntType lhs{ std::stoll(temp_lhs.value) };
+    IntType rhs{ std::stoll(temp_rhs.value) };
+    ret_value = uintLarge_t(std::to_string(lhs * rhs));
+  }
+  return ret_value;
+}
+
+int uintLarge_t::get_digit_value(size_t index) const
+{
+  return std::stoi(std::string{ this->value[index] });
+}
+void uintLarge_t::set_digit_value(int value, size_t index)
+{
+  std::string str_val = std::to_string(value);
+  this->value[index] = str_val[str_val.size() - 1];
+}
+
+std::pair<uintLarge_t, uintLarge_t> uintLarge_t::cut_in_half() const
+{
+  std::pair<uintLarge_t, uintLarge_t> output{};
+  size_t half_size = value.length() / 2;
+  if (half_size > default_chunk_size * 2)
+  {
+    uintLarge_t upper{ value.substr(0,half_size) };
+    uintLarge_t lower{ value.substr(half_size, value.length()) };
+    output = std::make_pair(upper, lower);
+  }
+  else
+  {
+    uintLarge_t upper{ value.substr(0,value.length() - default_chunk_size) };
+    uintLarge_t lower{ value.substr(value.length() - default_chunk_size) };
+    output = std::make_pair(upper, lower);
+  }
+  return output;
+}
+
+// TODO: remove if not used
+uintLarge_t uintLarge_t::multiply_by_10(const uintLarge_t& input, const size_t num_times)
+{
+  uintLarge_t temp_input = input;
   for (size_t i{ 0 }; i < num_times; ++i)
   {
-    output.value.append("0");
+    temp_input.value.append("0");
   }
-  this->value = output.value;
+  return temp_input;
+}
+
+void uintLarge_t::match_size(uintLarge_t& first, uintLarge_t& second)
+{
+  if (first.value.size() > second.value.size())
+  {
+    size_t delta = first.value.size() - second.value.size();
+    second.value.insert(0, delta, '0');
+  }
+  else if (first.value.size() < second.value.size())
+  {
+    size_t delta = second.value.size() - first.value.size();
+    first.value.insert(0, delta, '0');
+  }
+  else
+  {
+    // Do nothing
+  }
 }
