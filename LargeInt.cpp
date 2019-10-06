@@ -167,7 +167,7 @@ std::pair<uintLarge_t, uintLarge_t> uintLarge_t::cut_in_half() const
 {
   std::pair<uintLarge_t, uintLarge_t> output{};
   size_t half_size = value.length() / 2;
-  if (half_size > default_chunk_size * 2)
+  if (half_size > constants::default_chunk_size * 2)
   {
     uintLarge_t upper{ value.substr(0,half_size) };
     uintLarge_t lower{ value.substr(half_size, value.length()) };
@@ -175,8 +175,8 @@ std::pair<uintLarge_t, uintLarge_t> uintLarge_t::cut_in_half() const
   }
   else
   {
-    uintLarge_t upper{ value.substr(0,value.length() - default_chunk_size) };
-    uintLarge_t lower{ value.substr(value.length() - default_chunk_size) };
+    uintLarge_t upper{ value.substr(0,value.length() - constants::default_chunk_size) };
+    uintLarge_t lower{ value.substr(value.length() - constants::default_chunk_size) };
     output = std::make_pair(upper, lower);
   }
   return output;

@@ -4,8 +4,11 @@
 #include <string>
 #include <vector>
 
-const size_t default_chunk_size = 9; ///< maximum number of digits for multiplication of
+namespace constants
+{
+  const size_t default_chunk_size = 9; ///< maximum number of digits for multiplication of
                                      ///< two decimal numbers
+}
 
 ///
 /// Data type for operations with unsigned integer numbers greater than 64bits
@@ -63,7 +66,7 @@ private:
   static void match_size(uintLarge_t& first, uintLarge_t& second);
 
   /// Recusrive implmenetation of the karatasuba multiplication
-  static uintLarge_t karatasuba_multiply(const uintLarge_t& lhs, const uintLarge_t& rhs, const size_t chunk_size = default_chunk_size);
+  static uintLarge_t karatasuba_multiply(const uintLarge_t& lhs, const uintLarge_t& rhs, const size_t chunk_size = constants::default_chunk_size);
 
   ///
   /// Returns the integer value of a digit within the large unsigned integer
