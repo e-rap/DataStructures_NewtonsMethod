@@ -182,7 +182,6 @@ std::pair<uintLarge_t, uintLarge_t> uintLarge_t::cut_in_half() const
   return output;
 }
 
-// TODO: remove if not used
 uintLarge_t uintLarge_t::multiply_by_10(const uintLarge_t& input, const size_t num_times)
 {
   uintLarge_t temp_input = input;
